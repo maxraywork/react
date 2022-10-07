@@ -1,45 +1,36 @@
-import {useState} from "react";
-import PostForm from "./components/UI/PostForm";
-import PostList from "./components/UI/PostList";
-import './styles/App.css';
-import MySelect from "./components/UI/select/MySelect";
+import "./styles/App.css";
+import { BrowserRouter } from "react-router-dom";
+
+import Navbar from "./components/UI/Navbar/Navbar";
+import AppRouter from "./components/UI/AppRouter";
+import { AuthContext } from "./context";
+import { useEffect, useState } from "react";
 
 function App() {
-    const [posts, setPosts] = useState([
-        {id: 1, title: 'cJavascript 1', body: 'aDescription'},
-        {id: 2, title: 'bJavascript 2', body: 'bDescription'},
-        {id: 3, title: 'aJavascript 3', body: 'cDescription'},
-    ]);
+  const [isAuth, setIsAuth] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const [selectedSort, setSelectedSort] = useState('');
-
-
-    const createPost = (newPost) => {
-        setPosts([...posts, newPost]);
+  useEffect(() => {
+    if (localStorage.getItem("auth")) {
+      setIsAuth(true);
     }
-    const removePost = (post) => {
-        setPosts(posts.filter(p => p.id !== post.id))
-    }
+    setIsLoading(false);
+  }, []);
 
-    const sortPosts = sort => {
-        setSelectedSort(sort);
-        setPosts([...posts].sort((a, b) => a[sort].localeCompare(b[sort])));
-    }
-
-    return (
-        <div className="App">
-            <PostForm create={createPost}/>
-
-            <hr style={{margin: "15px 0"}}/>
-            <div>
-                <MySelect value={selectedSort} onChange={sortPosts} defaultValue={"Sort by"} options={[
-                    {value: 'title', name: 'By title'},
-                    {value: 'body', name: 'By description'}
-                ]}/>
-            </div>
-            <PostList remove={removePost} posts={posts} title={"Posts about JS"}/>
-        </div>
-    );
+  return (
+    <AuthContext.Provider
+      value={{
+        isAuth,
+        setIsAuth,
+        isLoading,
+      }}
+    >
+      <BrowserRouter>
+        <Navbar />
+        <AppRouter />
+      </BrowserRouter>
+    </AuthContext.Provider>
+  );
 }
 
 export default App;
