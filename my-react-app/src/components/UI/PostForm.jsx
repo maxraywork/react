@@ -8,7 +8,7 @@ const PostForm = (props) => {
     const addNewPost = e => {
         e.preventDefault()
         const newPost = {
-            ...post, id: Date.now()
+            ...post, id: Date.now(), date: Date.now()
         }
         props.create(newPost);
         setPost({title: '', body: ''})
