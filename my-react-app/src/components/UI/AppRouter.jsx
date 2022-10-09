@@ -1,8 +1,6 @@
 import { useContext } from "react";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthContext } from "../../context";
-import Login from "../../pages/Login";
-import Posts from "../../pages/Posts";
 import { privateRoutes, publicRoutes } from "../../router";
 
 const AppRouter = () => {
@@ -17,13 +15,13 @@ const AppRouter = () => {
       {privateRoutes.map((route) => {
         return <Route element={route.element} path={route.path} key={route.path} />;
       })}
-      <Route path="*" element={<Posts />} />
+      <Route path="*" element={<Navigate replace to="/posts" />} />
     </Routes> :
     <Routes>
       {publicRoutes.map((route) => {
         return <Route element={route.element} path={route.path} key={route.path} />;
       })}
-      <Route path="*" element={<Login />} />
+      <Route path="*" element={<Navigate replace to="/login" />} />
     </Routes>
     
   );

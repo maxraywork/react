@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import PostForm from "../components/UI/PostForm";
 import PostList from "../components/UI/PostList";
 import "../styles/App.css";
@@ -9,8 +9,10 @@ import { usePosts } from "../hooks/usePosts";
 import PostService from "../API/PostService";
 import { useFetching } from "../hooks/useFetching";
 import { getPageCount } from "../components/utils/pages";
-import Pagination from "../components/UI/pagination/Pagination";
 import { useObserver } from "../hooks/useObserver";
+
+import { AuthContext, User } from "../context";
+import { useDatabase } from "../hooks/useDatabase";
 
 function Posts() {
   const [posts, setPosts] = useState([]);
@@ -23,6 +25,9 @@ function Posts() {
   const [page, setPage] = useState(1);
   const lastElement = useRef();
 
+  const user = useContext(User);
+
+
   const [fetchPosts, isPostLoading, postError] = useFetching(
     async (limit, page) => {
       const response = await PostService.getAll(limit, page);
@@ -32,13 +37,19 @@ function Posts() {
     }
   );
 
-
+  
   useObserver(lastElement, page < totalPages, isPostLoading, () => {
     setPage(page + 1);
-  })
+  });
+
+  // const useDatabaseFirebase
+  
 
   useEffect(() => {
     fetchPosts(limit, page);
+
+    // useDatabase(`posts/${user.uid}`);
+    
   }, [page]);
 
   const createPost = (newPost) => {
