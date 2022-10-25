@@ -1,6 +1,5 @@
 import { isValidElement, useContext, useState } from "react";
 import MyButton from "../components/UI/button/MyButton";
-import MyInput from "../components/UI/input/MyInput";
 import { AuthContext } from "../context";
 import {
   getAuth,
@@ -75,7 +74,7 @@ const Login = () => {
     <div>
       <h1>Login page</h1>
       <form>
-        <MyInput
+        {/* <MyInput
           onChange={(e) => setEmail(e.target.value)}
           value={email}
           type="text"
@@ -86,7 +85,7 @@ const Login = () => {
           value={password}
           type="password"
           placeholder="Password"
-        />
+        /> */}
         <MyButton onClick={login}>Log in</MyButton>
         <MyButton onClick={signUp}>Sign up</MyButton>
       </form>

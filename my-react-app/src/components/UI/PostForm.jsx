@@ -1,31 +1,40 @@
-import React, {useState, useRef} from 'react';
-import MyInput from "./input/MyInput";
-import MyButton from "./button/MyButton";
+import React from "react";
+import { Form, FormLayout, TextField } from "@shopify/polaris";
 
-const PostForm = (props) => {
-    const [post, setPost] = useState({title: '', body: ''});
+const PostForm = ({post, setPost}) => {
+  
 
-    const addNewPost = e => {
-        e.preventDefault()
-        const newPost = {
-            ...post, id: Date.now(), date: Date.now()
-        }
-        props.create(newPost);
-        setPost({title: '', body: ''})
-    }
+  const handleChangesTitle = (newValue) =>
+    setPost({ ...post, title: newValue });
+  const handleChangesDesc = (newValue) => setPost({ ...post, desc: newValue });
+  const handleChangesBody = (newValue) => setPost({ ...post, body: newValue });
 
-    const [title, setTitle] = useState('');
-    const bodyInputRef = useRef();
-
-
-
-    return (
-        <form>
-            <MyInput value={post.title} onChange={e => setPost({...post, title: e.target.value})} type={"text"} placeholder={"Post name"} />
-            <MyInput value={post.body} onChange={e => setPost({...post, body: e.target.value})} type={"text"} placeholder={"Post description"} />
-            <MyButton onClick={addNewPost}>Add new post</MyButton>
-        </form>
-    );
-}
+  return (
+    <Form noValidate preventDefault>
+      <FormLayout>
+        <TextField
+          label="Title"
+          onChange={handleChangesTitle}
+          autoComplete="off"
+          value={post.title}
+        />
+        <TextField
+          label="Description"
+          onChange={handleChangesDesc}
+          autoComplete="off"
+          value={post.desc}
+          multiline={4}
+        />
+        <TextField
+          label="Your post"
+          onChange={handleChangesBody}
+          autoComplete="off"
+          value={post.body}
+          multiline={9}
+        />
+      </FormLayout>
+    </Form>
+  );
+};
 
 export default PostForm;

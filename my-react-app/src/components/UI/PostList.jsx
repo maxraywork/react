@@ -19,7 +19,6 @@ const PostList = (props) => {
             >
           <PostItem
             remove={props.remove}
-            number={index + 1}
             post={post}
             />
             </CSSTransition>

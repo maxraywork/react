@@ -2,7 +2,8 @@ import {initializeApp} from "firebase/app";
 import {getAuth} from "firebase/auth";
 import {getDatabase, onValue, ref, set, off, remove} from "firebase/database";
 
-const postsPath = "posts/";
+const uid =  localStorage.getItem('uid');
+const postsPath = `posts/${uid}`;
 
 export default class FirebaseService {
 
@@ -32,30 +33,24 @@ export default class FirebaseService {
         return getDatabase(this.getApp());
     }
 
-    static subscribeOnDatabase(path, callback) {
+    static subscribeOnPosts(callback, error) {
         const db = this.getDatabase();
 
-        const dbRef = ref(db, path);
+        const dbRef = ref(db, postsPath);
 
         onValue(dbRef, (snapshot) => callback(snapshot));
         return dbRef;
     }
 
-    static writeDataOnDatabase(path, data, callback) {
-        const db = ref(this.getDatabase(), path);
+    static setPostById(postId, data) {
+        const db = ref(this.getDatabase(), `${postsPath}/${postId}`);
         set(db, data);
         return db;
     }
 
-    static createPost(id, data) {
-        const db = ref(this.getDatabase(), `${postsPath}/${id}`);
-        set(db, data);
-        return db;
-    }
-
-    static deleteSpecificPost(uid, postId, data) {
-        const db = ref(this.getDatabase(), `${postsPath}/${uid}/${postId}`);
-        remove(db, data);
+    static removePostById(postId) {
+        const db = ref(this.getDatabase(), `${postsPath}/${postId}`);
+        remove(db);
         return db;
     }
 

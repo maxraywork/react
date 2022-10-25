@@ -1,105 +1,187 @@
-import {useEffect, useRef, useState, useContext, useMemo} from "react";
+import { useEffect, useRef, useState, useContext, useMemo } from "react";
 import PostForm from "../components/UI/PostForm";
-import PostList from "../components/UI/PostList";
 import "../styles/App.css";
-import PostFilter from "../components/PostFilter";
-import MyModal from "../components/UI/MyModal/MyModal";
-import MyButton from "../components/UI/button/MyButton";
-import {usePosts} from "../hooks/usePosts";
-import PostService from "../API/PostService";
-import {useFetching} from "../hooks/useFetching";
-import {getPageCount} from "../components/utils/pages";
-import {useObserver} from "../hooks/useObserver";
-import {AuthContext, User} from "../context";
+import { usePosts } from "../hooks/usePosts";
 import FirebaseService from "../API/FirebaseService";
+import {
+  Card,
+  EmptyState,
+  Filters,
+  Icon,
+  Layout,
+  Modal,
+  Page,
+  ResourceList,
+  Select,
+  Stack,
+  TextStyle,
+} from "@shopify/polaris";
+import { DeleteMajor, DeleteMinor } from "@shopify/polaris-icons";
+import { useCallback } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 
 function Posts() {
-    const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [filter, setFilter] = useState({ sort: "date", query: "" });
+  const [modal, setModal] = useState(false);
+  const sorterAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
+  const [isPostLoading, setIsPostLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const [post, setPost] = useState({ title: "", desc: "", body: "" });
 
-    const [filter, setFilter] = useState({sort: "", query: ""});
-    const [modal, setModal] = useState(false);
-    const sorterAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
-    const [totalPages, setTotalPages] = useState(0);
-    const [limit, setLimit] = useState(10);
-    const [page, setPage] = useState(1);
-    const lastElement = useRef();
+  const addNewPost = () => {
+    const newPost = {
+      ...post,
+      id: Date.now(),
+      date: Date.now(),
+    };
+    createPost(newPost);
+    setPost({ title: "", desc: "", body: "" });
+  };
 
-    const user = useContext(User);
-
-
-    const [fetchPosts, isPostLoading, postError] = useFetching(
-        async (limit, page) => {
-            const response = await PostService.getAll(limit, page);
-            setPosts([...posts, ...response.data]);
-            const totalCount = response.headers["x-total-count"];
-            setTotalPages(getPageCount(totalCount, limit));
-        }
-    );
-
-
-    useObserver(lastElement, page < totalPages, isPostLoading, () => {
-        setPage(page + 1);
+  useEffect(() => {
+    FirebaseService.subscribeOnPosts((snapshot) => {
+      setIsPostLoading(false);
+      const data = snapshot.val();
+      let postsArray = [];
+      for (let i in data) {
+        postsArray.push(data[i]);
+      }
+      setPosts(postsArray);
     });
+  }, []);
 
+  const createPost = (newPost) => {
+    FirebaseService.setPostById(newPost.id, {
+      title: newPost.title,
+      body: newPost.body,
+      date: newPost.date,
+      id: newPost.id,
+    });
+    setModal(false);
+  };
+  const removePost = (post) => {
+    FirebaseService.removePostById(post.id);
+  };
+  const onChangeModal = useCallback(() => setModal(!modal), [modal]);
 
-    // useMemo(() => {
-    //
-    //     console.log(FirebaseService.subscribeOnDatabase(`posts/${user.uid}`));
-    // }, []);
+  const promotedBulkActions = [
+    {
+      content: "Delete posts",
+      icon: <Icon source={DeleteMinor} color="critical" />,
+      onAction: () => console.log("Todo: implement bulk edit"),
+    },
+  ];
 
-    useEffect(() => {
-        // fetchPosts(limit, page);
-        FirebaseService.subscribeOnDatabase(user.uid, (snapshot) => {
-            const data = snapshot.val();
-            let postsArray = [];
-            for (let i in data) {
-                postsArray.push(data[i]);
-            }
-            setPosts(postsArray);
-        });
+  const modalComponent = useMemo(
+    () => (
+      <Modal
+        open={modal}
+        title="Create new post"
+        primaryAction={{
+          content: "Create post",
+          onAction: addNewPost,
+        }}
+        onClose={onChangeModal}
+      >
+        <Modal.Section>
+          <PostForm post={post} setPost={setPost} />
+        </Modal.Section>
+      </Modal>
+    ),
+    [modal, post, setPost, setModal]
+  );
 
-    }, [page]);
+  const onPostClick = (id) => {
+    navigate(`/${id}`);
+  }
 
-    const createPost = (newPost) => {
-        FirebaseService.writeDataOnDatabase(`posts/${user.uid}/${newPost.id}`, {
-            title: newPost.title,
-            body: newPost.body,
-            date: newPost.date,
-            id: newPost.id
-        });
-        setModal(false);
-    };
-    const removePost = (post) => {
-        setPosts(posts.filter((p) => p.id !== post.id));
-    };
-
-    // const changePage = (page) => {
-    //   setPage(page);
-    //   fetchPosts(limit, page);
-    // };
-
+  const renderItem = (item) => {
+    const { id, title, desc, body, date } = item;
     return (
-        <div className="App">
-            <MyButton style={{marginTop: 30}} onClick={() => setModal(true)}>
-                Create post
-            </MyButton>
-            <MyModal visible={modal} setVisible={setModal}>
-                <PostForm create={createPost}/>
-            </MyModal>
-
-            <hr style={{margin: "15px 0"}}/>
-            <PostFilter filter={filter} setFilter={setFilter}/>
-            {postError && <h1>Error ${postError}</h1>}
-            <PostList
-                remove={removePost}
-                posts={sorterAndSearchedPosts}
-                title={"Posts about JS"}
-            />
-            <div ref={lastElement}></div>
-            {isPostLoading && <h1>Loading...</h1>}
-            {/* <Pagination page={page} changePage={changePage} totalPages={totalPages} /> */}
+      <ResourceList.Item id={id} title={title} desc={desc} body={body} onClick={onPostClick}>
+        <h3>
+          <TextStyle variation="strong">{title}</TextStyle>
+        </h3>
+        <div>{desc ? desc : body}</div>
+        <div>
+          {new Date(date).getDate()}.{new Date(date).getMonth() + 1}.
+          {new Date(date).getFullYear()}
         </div>
+      </ResourceList.Item>
     );
+  };
+
+  const listComponent = useMemo(
+    () => (
+      <ResourceList
+        resourceName={{ singular: "post", plural: "posts" }}
+        sortValue={filter.sort}
+        selectedItems={selectedItems}
+        onSelectionChange={setSelectedItems}
+        selectable
+        promotedBulkActions={promotedBulkActions}
+        emptySearchState={
+          <EmptyState
+            heading="No posts were founded"
+            action={{
+              content: "Create Post",
+              onAction: onChangeModal,
+            }}
+          />
+        }
+        filterControl={
+          <Filters
+            queryValue={filter.query}
+            filters={[]}
+            queryPlaceholder={"Search..."}
+            appliedFilters={[]}
+            onQueryChange={(newValue) =>
+              setFilter({ ...filter, query: newValue })
+            }
+            onQueryClear={() => setFilter({ ...filter, query: "" })}
+            onClearAll={() => setFilter({ sort: "date", query: "" })}
+          >
+            <Stack>
+              <div></div>
+              <Select
+                label="Sort by"
+                labelInline
+                options={[
+                  { value: "date", label: "By date" },
+                  { value: "title", label: "By title" },
+                  { value: "body", label: "By description" },
+                ]}
+                onChange={(value) => setFilter({ ...filter, sort: value })}
+                value={filter.sort}
+              />
+            </Stack>
+          </Filters>
+        }
+        items={sorterAndSearchedPosts}
+        renderItem={renderItem}
+      ></ResourceList>
+    ),
+    [sorterAndSearchedPosts, filter, selectedItems, onChangeModal]
+  );
+
+  return (
+    <Page
+      title="Posts"
+      compactTitle
+      fullWidth
+      primaryAction={{ content: "Create Post", onAction: onChangeModal }}
+    >
+      <Layout>
+        <Layout.Section>
+          <Card>{listComponent}</Card>
+          {modalComponent}
+        </Layout.Section>
+      </Layout>
+    </Page>
+  );
 }
 
 export default Posts;

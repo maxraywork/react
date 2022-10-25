@@ -1,10 +1,13 @@
 import "./styles/App.css";
+import "@shopify/polaris/build/esm/styles.css";
 import { BrowserRouter } from "react-router-dom";
 
 import Navbar from "./components/UI/Navbar/Navbar";
 import AppRouter from "./components/UI/AppRouter";
 import { AuthContext, User } from "./context";
 import { useEffect, useState } from "react";
+import { AppProvider } from "@shopify/polaris";
+import en from "@shopify/polaris/locales/en.json";
 
 function App() {
   const [isAuth, setIsAuth] = useState(false);
@@ -23,20 +26,22 @@ function App() {
   }, []);
 
   return (
-    <User.Provider value={user}>
-      <AuthContext.Provider
-        value={{
-          isAuth,
-          setIsAuth,
-          isLoading,
-        }}
-      >
-        <BrowserRouter>
-          <Navbar />
-          <AppRouter />
-        </BrowserRouter>
-      </AuthContext.Provider>
-    </User.Provider>
+    <AppProvider i18n={en}>
+      <User.Provider value={user}>
+        <AuthContext.Provider
+          value={{
+            isAuth,
+            setIsAuth,
+            isLoading,
+          }}
+        >
+          <BrowserRouter>
+            <Navbar />
+            <AppRouter />
+          </BrowserRouter>
+        </AuthContext.Provider>
+      </User.Provider>
+    </AppProvider>
   );
 }
 
